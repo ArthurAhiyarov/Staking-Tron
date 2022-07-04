@@ -4,16 +4,15 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 error Staking__TransferFailed();
 
-contract StakingTron is Ownable {
+contract StakingTron is Ownable, ReentrancyGuard {
 
     /* ========== STATE VARIABLES ========== */
 
     IERC20 immutable public trxToken;
-
-    mapping(address => uint256) public s_balances;
 
     uint256 public s_totalSupply; // total staked balance
     uint public interest; // percent per munite
@@ -21,6 +20,8 @@ contract StakingTron is Ownable {
     uint public stakingTime;
     uint public ownerFeeBalance; 
     uint public index = 1;
+
+    /* =========== STRUCTS =========== */
 
     struct Staker {
         address stakerAddr;
@@ -35,6 +36,8 @@ contract StakingTron is Ownable {
     Staker[] public stakersList;
     // staker's address => staker's index
     mapping(address => uint) public stakersIndexes;
+    // staker's address => staker's balance
+    mapping(address => uint256) public s_balances;
 
     /* ========== EVENTS ========== */
 
@@ -142,12 +145,12 @@ contract StakingTron is Ownable {
         stakingTime = newTime;
     }
 
-    /* ========== VIEWS ========== */
-
     function setFeeRate(uint newFee) external onlyOwner returns(uint _fee) {
         fee = newFee;
         return fee;
     }
+
+    /* ========== VIEWS ========== */
     
     function getStakers() external view returns(Staker[] memory) {
         return stakersList;
