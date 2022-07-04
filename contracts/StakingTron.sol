@@ -2,7 +2,6 @@
 
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
@@ -11,8 +10,6 @@ error Staking__TransferFailed();
 contract StakingTron is Ownable, ReentrancyGuard {
 
     /* ========== STATE VARIABLES ========== */
-
-    IERC20 immutable public trxToken;
 
     uint256 public s_totalSupply; // total staked balance
     uint public interest; // percent per munite
@@ -46,24 +43,23 @@ contract StakingTron is Ownable, ReentrancyGuard {
 
     /* ========== CONSTRUCTOR ========== */
 
-    constructor(uint feeRate, uint interestRate, address _trxToken) {
-        trxToken = IERC20(_trxToken);
+    constructor(uint feeRate, uint interestRate) {
         fee = feeRate;
         interest = interestRate;
     }
 
     /* ========== MUTATIVE FUNCTIONS ========== */
 
-    function stake(uint256 amount) external payable {
-        require(amount != 0, "You cannot stake 0 tokens");
-        s_balances[msg.sender] += amount;
-        s_totalSupply += amount;
+    function stake() external payable nonReentrant {
+        require(msg.value != 0, "You cannot stake 0 tokens");
+        s_balances[msg.sender] += msg.value;
+        s_totalSupply += msg.value;
 
         if ((stakersIndexes[msg.sender]) == 0) {
             Staker memory newStaker = Staker(
                 {
                     stakerAddr: msg.sender,
-                    amountStaked: amount,
+                    amountStaked: msg.value,
                     stakePeriod: stakingTime,
                     depositStartTime: block.timestamp,
                     depositFinishTime: block.timestamp + stakingTime * 60,
@@ -79,30 +75,26 @@ contract StakingTron is Ownable, ReentrancyGuard {
             Staker storage existingStaker = stakersList[currentIndex];
             require(existingStaker.hasStaked == false, 'You have already staked');
             Staker storage existingStakerInList = stakersList[existingStaker.index];
-            existingStakerInList.amountStaked += amount;
+            existingStakerInList.amountStaked += msg.value;
             existingStaker.stakePeriod = stakingTime;
             existingStakerInList.depositStartTime = block.timestamp;
             existingStakerInList.depositFinishTime = block.timestamp + stakingTime;
             existingStakerInList.hasStaked = true;
         }
-        bool success = trxToken.transferFrom(msg.sender, address(this), amount);
-        if(!success) {
-            revert Staking__TransferFailed(); 
-        }
-        emit staked(msg.sender, amount, block.timestamp);
+        emit staked(msg.sender, msg.value, block.timestamp);
     }
 
     function unstakeAndClaimReward(uint256 amount) external returns(uint reward){
 
-        require(amount != 0, "You cannot stake 0 tokens");
+        require(amount > 0, "Can not unstake 0");
 
-        uint currentIndex = stakersIndexes[msg.sender];
+        address stakerAddress = msg.sender;
+        uint currentIndex = stakersIndexes[stakerAddress];
         require(currentIndex != 0, "You have not staked");
         Staker storage existingStaker = stakersList[currentIndex];
 
         require(existingStaker.depositFinishTime < block.timestamp, "Your stake has not finished yet");
         require(existingStaker.amountStaked >= amount, "Can not unstake that much");
-        require(amount > 0, "Can not unstake 0");
 
         uint rewardRaw = (existingStaker.amountStaked / 100) * interest * existingStaker.stakePeriod;
         uint ownerFee = (rewardRaw / 100) * fee;
@@ -111,26 +103,20 @@ contract StakingTron is Ownable, ReentrancyGuard {
 
         ownerFeeBalance += ownerFee;
 
-
         existingStaker.amountStaked -= amount;
         existingStaker.stakePeriod = 0;
         existingStaker.depositStartTime = 0;
         existingStaker.depositFinishTime = 0;
         existingStaker.hasStaked = false;
 
-        s_balances[msg.sender] -= amount;
+        s_balances[stakerAddress] -= amount;
+        s_totalSupply -= amount;
 
-        bool successUnstake = trxToken.transfer(msg.sender, stakerAmount + rewardFinal);
-        if(!successUnstake) {
-            revert Staking__TransferFailed();
-        }
+        stakerAddress.transfer(stakerAmount + rewardFinal);
 
-        bool successOwnerFee = trxToken.transfer(owner(), ownerFeeBalance);
-        if(!successOwnerFee) {
-            revert Staking__TransferFailed();
-        }
+        owner().transfer(ownerFeeBalance);
 
-        emit unstaked(msg.sender, amount, rewardFinal, block.timestamp);
+        emit unstaked(stakerAddress, amount, rewardFinal, block.timestamp);
         return rewardFinal;
     }
 

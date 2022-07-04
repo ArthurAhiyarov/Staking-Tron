@@ -1,4 +1,4 @@
-const port = process.env.HOST_PORT || 9090
+const port = process.env.HOST_PORT || 8545
 
 module.exports = {
   networks: {
