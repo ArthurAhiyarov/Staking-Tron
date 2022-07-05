@@ -88,8 +88,7 @@ contract StakingTron is Ownable, ReentrancyGuard {
 
         require(amount > 0, "Can not unstake 0");
 
-        address stakerAddress = msg.sender;
-        uint currentIndex = stakersIndexes[stakerAddress];
+        uint currentIndex = stakersIndexes[msg.sender];
         require(currentIndex != 0, "You have not staked");
         Staker storage existingStaker = stakersList[currentIndex];
 
@@ -109,12 +108,15 @@ contract StakingTron is Ownable, ReentrancyGuard {
         existingStaker.depositFinishTime = 0;
         existingStaker.hasStaked = false;
 
-        s_balances[stakerAddress] -= amount;
+        s_balances[msg.sender] -= amount;
         s_totalSupply -= amount;
+
+        address payable stakerAddress = payable(msg.sender);
 
         stakerAddress.transfer(stakerAmount + rewardFinal);
 
-        owner().transfer(ownerFeeBalance);
+        address payable ownerAddress = payable(owner());
+        ownerAddress.transfer(ownerFeeBalance);
 
         emit unstaked(stakerAddress, amount, rewardFinal, block.timestamp);
         return rewardFinal;
