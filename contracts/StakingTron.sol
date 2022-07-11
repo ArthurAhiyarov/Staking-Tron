@@ -14,7 +14,7 @@ contract StakingTron is Ownable, ReentrancyGuard {
     uint256 public s_totalSupply; // total staked balance
     uint public interest; // percent per munite
     uint public fee; // owner's comission
-    uint public stakingTime;
+    uint public stakingTime = 3 minutes; // in mins
     uint public ownerFeeBalance; 
     uint public index = 1;
 
@@ -62,7 +62,7 @@ contract StakingTron is Ownable, ReentrancyGuard {
                     amountStaked: msg.value,
                     stakePeriod: stakingTime,
                     depositStartTime: block.timestamp,
-                    depositFinishTime: block.timestamp + stakingTime * 60,
+                    depositFinishTime: block.timestamp + stakingTime * 60 * 1 seconds,
                     hasStaked: true,
                     index: index - 1
                 }
@@ -78,7 +78,7 @@ contract StakingTron is Ownable, ReentrancyGuard {
             existingStakerInList.amountStaked += msg.value;
             existingStaker.stakePeriod = stakingTime;
             existingStakerInList.depositStartTime = block.timestamp;
-            existingStakerInList.depositFinishTime = block.timestamp + stakingTime;
+            existingStakerInList.depositFinishTime = block.timestamp + stakingTime * 60 * 1 seconds;
             existingStakerInList.hasStaked = true;
         }
         emit staked(msg.sender, msg.value, block.timestamp);
@@ -130,7 +130,7 @@ contract StakingTron is Ownable, ReentrancyGuard {
     function setStakingTime3or5or10mins(uint newTime) external onlyOwner {
         if (newTime != 3 || newTime != 5 || newTime != 10) 
             revert("Time should be equal to 3/5/10 mins");
-        stakingTime = newTime;
+        stakingTime = newTime * 1 minutes;
     }
 
     function setFeeRate(uint newFee) external onlyOwner returns(uint _fee) {
