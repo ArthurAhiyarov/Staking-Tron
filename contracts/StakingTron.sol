@@ -17,6 +17,8 @@ contract StakingTron is Ownable, ReentrancyGuard {
     uint public stakingTime = 3 minutes; // in mins
     uint public ownerFeeBalance; 
     uint public index = 1;
+    uint public interestLimit; // is set in the constructor
+    uint public feeLimit; // is set in the constructor
 
     /* =========== STRUCTS =========== */
 
@@ -39,13 +41,15 @@ contract StakingTron is Ownable, ReentrancyGuard {
     /* ========== EVENTS ========== */
 
     event staked(address stakerAddr, uint amount, uint date);
-    event unstaked(address stakerAddr, uint amount, uint reward, uint date);
+    event unstaked(address stakerAddr, uint amount, uint date);
 
     /* ========== CONSTRUCTOR ========== */
 
-    constructor(uint feeRate, uint interestRate) {
+    constructor(uint feeRate, uint interestRate, uint _interestLimit, uint _feeLimit) {
         fee = feeRate;
         interest = interestRate;
+        interestLimit = _interestLimit;
+        feeLimit = _feeLimit;
     }
 
     /* ========== MUTATIVE FUNCTIONS ========== */
@@ -118,22 +122,25 @@ contract StakingTron is Ownable, ReentrancyGuard {
         address payable ownerAddress = payable(owner());
         ownerAddress.transfer(ownerFeeBalance);
 
-        emit unstaked(stakerAddress, amount, rewardFinal, block.timestamp);
+        emit unstaked(stakerAddress, amount, block.timestamp);
         return rewardFinal;
     }
 
-    function setInterestFee(uint newInterest) external onlyOwner returns(uint _interest) {
+    function setInterestRate(uint newInterest) external onlyOwner returns(uint _interest) {
+        require(newInterest < interestLimit, "Interest must be less than interestLimit");
         interest = newInterest;
         return interest;
     }
 
-    function setStakingTime3or5or10mins(uint newTime) external onlyOwner {
+    function setStakingTime3or5or10mins(uint newTime) external onlyOwner returns(uint _stakingTime){
         if (newTime != 3 || newTime != 5 || newTime != 10) 
             revert("Time should be equal to 3/5/10 mins");
         stakingTime = newTime * 1 minutes;
+        return stakingTime;
     }
 
     function setFeeRate(uint newFee) external onlyOwner returns(uint _fee) {
+        require(newFee < feeLimit, "Fee must be less than feeLimit");
         fee = newFee;
         return fee;
     }
