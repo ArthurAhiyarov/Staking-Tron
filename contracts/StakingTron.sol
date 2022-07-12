@@ -154,4 +154,8 @@ contract StakingTron is Ownable, ReentrancyGuard {
     function getTotalBalance() external view returns(uint totalSupply){
         return s_totalSupply;
     }
+
+    function getStakerBalance() external view returns(uint yourBalance) {
+        return s_balances[msg.sender];
+    }
 }

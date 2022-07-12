@@ -34,8 +34,8 @@ describe('stake', async function () {
     });
 
     it('should successfully a stake and emit the staked event', async function () {
-        let stakeValue = ethers.utils.parseEther('5');
-        let tx = await staking.connect(testUser1).stake({ value: stakeValue });
+        const stakeValue = ethers.utils.parseEther('5');
+        const tx = await staking.connect(testUser1).stake({ value: stakeValue });
         await tx.wait();
 
         expect(tx)

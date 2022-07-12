@@ -1,7 +1,7 @@
 const { expect } = require('chai');
 const { ethers } = require('hardhat');
 
-describe('getTotalBalance', async function () {
+describe('getStakerBalance', async function () {
     let owner, testUser1, testUser2;
 
     beforeEach(async function () {
@@ -15,10 +15,10 @@ describe('getTotalBalance', async function () {
         await staking.deployed();
     });
 
-    it('should correctly provide info on total supply', async function () {
+    it('should give correct balance of the staker', async function () {
         const stakeValue = ethers.utils.parseEther('5');
         await staking.connect(testUser1).stake({ value: stakeValue });
 
-        expect(await staking.connect(testUser1).getTotalBalance()).to.equal(5);
+        await expect(staking.connect(testUser1).getStakerBalance()).to.equal(5);
     });
 });
