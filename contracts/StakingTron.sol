@@ -54,6 +54,10 @@ contract StakingTron is Ownable, ReentrancyGuard {
 
     /* ========== MUTATIVE FUNCTIONS ========== */
 
+    /** @dev Lets a person stake
+      * Emits the staked event
+     */
+
     function stake() external payable nonReentrant {
         require(msg.value != 0, "You cannot stake 0 tokens");
         s_balances[msg.sender] += msg.value;
@@ -87,6 +91,12 @@ contract StakingTron is Ownable, ReentrancyGuard {
         }
         emit staked(msg.sender, msg.value, block.timestamp);
     }
+
+    /** @dev Lets a person unstaked their staked tokens and claim a reward
+      * @param amount Amount of tokens a caller wants to unstake
+      * @return rewardFinal A caller's reward for staking
+      * Emits the unstaked event
+     */
 
     function unstakeAndClaimReward(uint256 amount) external returns(uint reward){
 
@@ -126,11 +136,21 @@ contract StakingTron is Ownable, ReentrancyGuard {
         return rewardFinal;
     }
 
+    /** @dev Changes the interest rate
+      * @param newInterest A new interest rate
+      * @return interest Updated interest
+     */
+
     function setInterestRate(uint newInterest) external onlyOwner returns(uint _interest) {
         require(newInterest < interestLimit, "Interest must be less than interestLimit");
         interest = newInterest;
         return interest;
     }
+
+    /** @dev Changes staking time
+      * @param newTime new staking time
+      * @return stakingTime Updated stakingTime
+     */
 
     function setStakingTime3or5or10mins(uint newTime) external onlyOwner returns(uint _stakingTime){
         if (newTime != 3 || newTime != 5 || newTime != 10) 
@@ -138,6 +158,11 @@ contract StakingTron is Ownable, ReentrancyGuard {
         stakingTime = newTime * 1 minutes;
         return stakingTime;
     }
+
+    /** @dev Changes fee rate
+      * @param newFee new fee rate
+      * @return fee Updated fee
+     */
 
     function setFeeRate(uint newFee) external onlyOwner returns(uint _fee) {
         require(newFee < feeLimit, "Fee must be less than feeLimit");
@@ -147,13 +172,25 @@ contract StakingTron is Ownable, ReentrancyGuard {
 
     /* ========== VIEWS ========== */
     
+    /** @dev Provides all info on stakers
+      * @return stakersList List of stakers from the storage
+     */
+
     function getStakers() external view returns(Staker[] memory) {
         return stakersList;
     }
 
+    /** @dev Shows total balance on the contract
+      * @return s_totalSupply Amount of tokens staked
+     */
+
     function getTotalBalance() external view returns(uint totalSupply){
         return s_totalSupply;
     }
+
+    /** @dev Shows balance of the caller
+      * @return s_balances[msg.sender] Amount of the caller's staked tokens 
+     */
 
     function getStakerBalance() external view returns(uint yourBalance) {
         return s_balances[msg.sender];
