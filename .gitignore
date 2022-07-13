@@ -3,4 +3,6 @@ src/js/metacoin-config.js
 node_modules
 build
 .env
+FullNode
+deploy_tron.sh
 
