@@ -98,7 +98,7 @@ contract StakingTron is Ownable, ReentrancyGuard {
       * Emits the unstaked event
      */
 
-    function unstakeAndClaimReward(uint256 amount) external returns(uint reward){
+    function unstakeAndClaimReward(uint256 amount) external nonReentrant returns(uint reward){
 
         require(amount > 0, "Can not unstake 0");
 
